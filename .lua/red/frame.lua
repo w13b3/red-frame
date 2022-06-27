@@ -24,8 +24,15 @@ function Frame:RoutePath(path, method)
         return false, 404
     end
 
-    return func()
+    local ok, data = xpcall(func, print)
+    if not ok then
+        return false, 500
+    elseif data then
+        print(data)
     end
+
+    return true, 200
+end
 
 
 function Frame.New(frameName)
@@ -55,11 +62,17 @@ local function sheet()
     return "sheet"
 end
 
+local function err()
+    return "nil" .. nil
+end
+
 frame:Page("test", "get", sheet)
+frame:Page("err", "post", err)
 
 print("found: ", frame:RoutePath("test", "get"))
 print("not found: ", frame:RoutePath("test1", "get"))
 print("no method like this", frame:RoutePath("test", "post"))
+print("func error", frame:RoutePath("err", "post"))
 
 
 
