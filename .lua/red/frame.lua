@@ -1,19 +1,19 @@
 local Frame = {}
 Frame.__index = Frame
 
-local function update(tbl, key, value)
-    tbl[key] = tbl[key] or {}
-    table.insert(tbl[key], value or {})
+function Frame:Page(path, method, func)
+    method = tostring(method):upper()
+    self.paths[path] = method
+    self.methods[method] = self.methods[method] or {}
+    self.methods[method][path] = func
 end
 
-function Frame:Page(path, method, func)
-    method = method or GetMethod()
-    method = tostring(method):upper()
-    --print(require("inspect")(self.paths))
+function Frame:RoutePath(path, method)
+    method = method and tostring(method):upper() or GetMethod()
 
-    update(self.paths, path, method)
-    update(self.methods, method)
-    update(self.methods[method], path, func)
+    local pages = self.methods[method]
+    local func = pages[path]
+    return func()
 end
 
 function Frame.New(frameName)
@@ -41,7 +41,7 @@ end
 
 frame:Page("test", "get", sheet)
 
-
-
+local result = frame:RoutePath("test", "get")
+print(result)
 
 return Frame
