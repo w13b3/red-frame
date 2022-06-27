@@ -2,6 +2,25 @@ local Frame = {}
 Frame.__index = Frame
 
 
+function Frame.New(frameName)
+    local newInstance = {
+        frameName = frameName or "Frame",
+        paths = {},
+        methods = {}
+    }
+    return setmetatable(newInstance, Frame)
+end
+
+
+local MetaFrame = {
+    __call = function(self, frameName)
+        return Frame.New(frameName)
+    end
+}
+setmetatable(Frame, MetaFrame)
+
+
+
 -- local mocks
 local Write = print
 
@@ -22,6 +41,9 @@ function Frame:Page(path, method, func)
     table.insert(self.paths[path], method)
     self.methods[method] = self.methods[method] or {}
     self.methods[method][path] = func
+    Log(kLogInfo,
+        string.format("%s: created page with path '%s' for the %s method", self.frameName, path, method)
+    )
 end
 
 function Frame:Get(path, func) return Frame.Page(self, path, "GET", func) end
@@ -40,46 +62,34 @@ function Frame:RoutePath(path, method)
 
     local pages = self.methods[method]
     if not pages then
+        Log(kLogWarn, string.format("%s: method %s not implemented", self.frameName, method))
         return false, 501, "Not Implemented"
     end
 
     local func = pages[cleanPath]
     if not func then
+        Log(kLogWarn, string.format("%s: page '%s' for method %s was not found", self.frameName, path, method))
         return false, 404, "Not Found"
     end
 
-    local ok, data, respBool, respCode, respMsg = xpcall(func, print)
+    local ok, data, respBool, respCode, respMsg = xpcall(func, function(message) Log(kLogError, message) end)
     if not ok then
+        Log(kLogDebug, string.format("%s: function of %s created an error", self.frameName, path))
+        Log(kLogDebug, string.format("%s: 'path' %s was requested with %s", self.frameName, path, method))
         return false, 500, "Internal Server Error"
     elseif data then
         Write(tostring(data))
     end
 
+    Log(kLogInfo, string.format("%s: page '%s' with method %s was successful", self.frameName, path, method))
     return respBool or true, respCode or 200, respMsg or "OK"
 end
 
 
-function Frame.New(frameName)
-    local newInstance = {
-        frameName = frameName,
-        paths = {},
-        methods = {}
-    }
-    return setmetatable(newInstance, Frame)
-end
-
-
-local MetaFrame = {
-    __call = function(self, frameName)
-        return Frame.New(frameName)
-    end
-}
-setmetatable(Frame, MetaFrame)
-
 
 -- local testing
 
-local frame = Frame("new frame")
+local frame = Frame()
 
 local function sheet()
     return nil, true, 201, "Created"
@@ -97,6 +107,8 @@ frame:Post("/my%20test/path/", sheet)  -- create page with space in path
 
 print("found: ", frame:RoutePath("/", "get"))
 print("found: ", frame:RoutePath("//", "post"))
+print("found: ", frame:RoutePath("/put", "put"))
+
 print("found: ", frame:RoutePath("test", "get"))
 print("found: ", frame:RoutePath("/my test/path", "post"))
 
