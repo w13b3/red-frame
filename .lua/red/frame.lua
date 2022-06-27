@@ -2,8 +2,15 @@ local Frame = {}
 Frame.__index = Frame
 
 
+-- local mocks
+local Write = print
+
+
 function Frame:Page(path, method, func)
     method = tostring(method):upper()
+
+    path = string.match(path, "^/") and path or "/" .. path
+
     self.paths[path] = self.paths[path] or {}
     table.insert(self.paths[path], method)
     self.methods[method] = self.methods[method] or {}
@@ -30,7 +37,7 @@ function Frame:RoutePath(path, method)
     if not ok then
         return false, 500, "Internal Server Error"
     elseif data then
-        print(tostring(data))
+        Write(tostring(data))
     end
 
     return respBool or true, respCode or 200, respMsg or "OK"
@@ -52,7 +59,6 @@ local MetaFrame = {
         return Frame.New(frameName)
     end
 }
-
 setmetatable(Frame, MetaFrame)
 
 
@@ -68,11 +74,11 @@ local function err()
     return "nil" .. nil
 end
 
-frame:Page("/test", "get", sheet)
-frame:Page("/my%20test", "get", sheet)  -- create page with space in path
+frame:Page("test", "get", sheet)
+frame:Page("/my%20test/path", "get", sheet)  -- create page with space in path
 
 print("found: ", frame:RoutePath("/test", "get"))
-print("found: ", frame:RoutePath("/my test", "get"))
+print("found: ", frame:RoutePath("/my test/path", "get"))
 
 print("not found: ", frame:RoutePath("test1", "get"))
 print("no method like this", frame:RoutePath("test", "post"))
