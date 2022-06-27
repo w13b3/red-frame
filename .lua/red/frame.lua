@@ -16,22 +16,22 @@ function Frame:RoutePath(path, method)
 
     local pages = self.methods[method]
     if not pages then
-        return false, 405
+        return false, 501, "Not Implemented"
     end
 
     local func = pages[path]
     if not func then
-        return false, 404
+        return false, 404, "Not Found"
     end
 
-    local ok, data = xpcall(func, print)
+    local ok, data, respBool, respCode, respMsg = xpcall(func, print)
     if not ok then
-        return false, 500
+        return false, 500, "Internal Server Error"
     elseif data then
-        print(data)
+        print(tostring(data))
     end
 
-    return true, 200
+    return respBool or true, respCode or 200, respMsg or "OK"
 end
 
 
@@ -59,7 +59,7 @@ setmetatable(Frame, MetaFrame)
 local frame = Frame("new frame")
 
 local function sheet()
-    return "sheet"
+    return nil, true, 201, "Created"
 end
 
 local function err()
