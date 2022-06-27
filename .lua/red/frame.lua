@@ -9,7 +9,9 @@ local Write = print
 function Frame:Page(path, method, func)
     method = tostring(method):upper()
 
-    path = string.match(path, "^/") and path or "/" .. path
+    path = tostring(path)
+    path = string.match(path, "^/") and path or string.format("/%s", path)
+    path = string.len(path) == 1 and path or string.gsub(path, "^(.-)%s*/$", "%1")
 
     self.paths[path] = self.paths[path] or {}
     table.insert(self.paths[path], method)
@@ -74,9 +76,11 @@ local function err()
     return "nil" .. nil
 end
 
+frame:Page("/", "get", sheet)
 frame:Page("test", "get", sheet)
-frame:Page("/my%20test/path", "get", sheet)  -- create page with space in path
+frame:Page("/my%20test/path/", "get", sheet)  -- create page with space in path
 
+print("found: ", frame:RoutePath("/", "get"))
 print("found: ", frame:RoutePath("/test", "get"))
 print("found: ", frame:RoutePath("/my test/path", "get"))
 
