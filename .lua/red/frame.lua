@@ -14,12 +14,14 @@ end
 function Frame:RoutePath(path, method)
     method = method and tostring(method):upper() or GetMethod()
 
+    local cleanPath = EscapePath(path)
+
     local pages = self.methods[method]
     if not pages then
         return false, 501, "Not Implemented"
     end
 
-    local func = pages[path]
+    local func = pages[cleanPath]
     if not func then
         return false, 404, "Not Found"
     end
@@ -66,12 +68,16 @@ local function err()
     return "nil" .. nil
 end
 
-frame:Page("test", "get", sheet)
-frame:Page("err", "post", err)
+frame:Page("/test", "get", sheet)
+frame:Page("/my%20test", "get", sheet)  -- create page with space in path
 
-print("found: ", frame:RoutePath("test", "get"))
+print("found: ", frame:RoutePath("/test", "get"))
+print("found: ", frame:RoutePath("/my test", "get"))
+
 print("not found: ", frame:RoutePath("test1", "get"))
 print("no method like this", frame:RoutePath("test", "post"))
+
+ frame:Page("err", "post", err)
 print("func error", frame:RoutePath("err", "post"))
 
 
