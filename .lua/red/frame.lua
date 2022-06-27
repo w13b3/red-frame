@@ -19,6 +19,13 @@ function Frame:Page(path, method, func)
     self.methods[method][path] = func
 end
 
+function Frame:Get(path, func) return Frame.Page(self, path, "GET", func) end
+function Frame:Head(path, func) return Frame.Page(self, path, "HEAD", func) end
+function Frame:Post(path, func) return Frame.Page(self, path, "POST", func) end
+function Frame:Put(path, func) return Frame.Page(self, path, "PUT", func) end
+function Frame:Delete(path, func) return Frame.Page(self, path, "DELETE", func) end
+function Frame:Patch(path, func) return Frame.Page(self, path, "PATCH", func) end
+
 
 function Frame:RoutePath(path, method)
     method = method and tostring(method):upper() or GetMethod()
@@ -77,18 +84,18 @@ local function err()
 end
 
 frame:Page("/", "get", sheet)
-frame:Page("test", "get", sheet)
-frame:Page("/my%20test/path/", "get", sheet)  -- create page with space in path
+frame:Get("test", sheet)
+frame:Post("/my%20test/path/", sheet)  -- create page with space in path
 
 print("found: ", frame:RoutePath("/", "get"))
 print("found: ", frame:RoutePath("/test", "get"))
-print("found: ", frame:RoutePath("/my test/path", "get"))
+print("found: ", frame:RoutePath("/my test/path", "post"))
 
-print("not found: ", frame:RoutePath("test1", "get"))
-print("no method like this", frame:RoutePath("test", "post"))
+print("not found: ", frame:RoutePath("/test1", "get"))
+print("no method like this", frame:RoutePath("/test", "post"))
 
- frame:Page("err", "post", err)
-print("func error", frame:RoutePath("err", "post"))
+ frame:Page("/err", "post", err)
+print("func error", frame:RoutePath("/err", "post"))
 
 
 
