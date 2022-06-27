@@ -6,12 +6,17 @@ Frame.__index = Frame
 local Write = print
 
 
-function Frame:Page(path, method, func)
-    method = tostring(method):upper()
-
+local function CleanPath(path)
     path = tostring(path)
     path = string.match(path, "^/") and path or string.format("/%s", path)
     path = string.len(path) == 1 and path or string.gsub(path, "^(.-)%s*/$", "%1")
+    return path
+end
+
+
+function Frame:Page(path, method, func)
+    method = tostring(method):upper()
+    path = CleanPath(path)
 
     self.paths[path] = self.paths[path] or {}
     table.insert(self.paths[path], method)
@@ -30,7 +35,8 @@ function Frame:Patch(path, func) return Frame.Page(self, path, "PATCH", func) en
 function Frame:RoutePath(path, method)
     method = method and tostring(method):upper() or GetMethod()
 
-    local cleanPath = EscapePath(path)
+    local cleanPath = CleanPath(path)
+    cleanPath = EscapePath(cleanPath)
 
     local pages = self.methods[method]
     if not pages then
@@ -83,19 +89,22 @@ local function err()
     return "nil" .. nil
 end
 
-frame:Page("/", "get", sheet)
+frame:Page("/", "get", sheet)   -- mix
+frame:Post("/", sheet)          -- match
+
 frame:Get("test", sheet)
 frame:Post("/my%20test/path/", sheet)  -- create page with space in path
 
 print("found: ", frame:RoutePath("/", "get"))
-print("found: ", frame:RoutePath("/test", "get"))
+print("found: ", frame:RoutePath("//", "post"))
+print("found: ", frame:RoutePath("test", "get"))
 print("found: ", frame:RoutePath("/my test/path", "post"))
 
-print("not found: ", frame:RoutePath("/test1", "get"))
-print("no method like this", frame:RoutePath("/test", "post"))
+print("not found: ", frame:RoutePath("test1", "get"))
+print("no method like this", frame:RoutePath("test", "post"))
 
  frame:Page("/err", "post", err)
-print("func error", frame:RoutePath("/err", "post"))
+print("func error", frame:RoutePath("err", "post"))
 
 
 
