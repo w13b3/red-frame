@@ -38,9 +38,9 @@ function Frame:Page(path, method, func)
     path = CleanPath(path)
 
     self.paths[path] = self.paths[path] or {}
-    table.insert(self.paths[path], method)
+    table.insert(self.paths[path], method)   -- list can have duplicate methods
     self.methods[method] = self.methods[method] or {}
-    self.methods[method][path] = func
+    self.methods[method][path] = func  -- keys are overwritten if already defined
     Log(kLogInfo,
         string.format("%s: created page with path '%s' for the %s method", self.frameName, path, method)
     )
@@ -68,20 +68,25 @@ function Frame:RoutePath(path, method)
 
     local func = pages[cleanPath]
     if not func then
-        Log(kLogWarn, string.format("%s: page '%s' for method %s was not found", self.frameName, path, method))
-        return false, 404, "Not Found"
+        if not self.paths[cleanPath] or not self.paths[path] then
+            Log(kLogWarn, string.format("%s: page '%s' for method %s was not found", self.frameName, cleanPath, method))
+            return false, 404, "Not Found"
+        else
+            Log(kLogWarn, string.format("%s: page '%s' does not have method %s", self.frameName, cleanPath, method))
+            return false, 405, "Method Not Allowed"
+        end
     end
 
     local ok, data, respBool, respCode, respMsg = xpcall(func, function(message) Log(kLogError, message) end)
     if not ok then
-        Log(kLogDebug, string.format("%s: function of %s created an error", self.frameName, path))
-        Log(kLogDebug, string.format("%s: 'path' %s was requested with %s", self.frameName, path, method))
+        Log(kLogDebug, string.format("%s: function of %s created an error", self.frameName, cleanPath))
+        Log(kLogDebug, string.format("%s: 'path' %s was requested with %s", self.frameName, cleanPath, method))
         return false, 500, "Internal Server Error"
     elseif data then
         Write(tostring(data))
     end
 
-    Log(kLogInfo, string.format("%s: page '%s' with method %s was successful", self.frameName, path, method))
+    Log(kLogInfo, string.format("%s: page '%s' with method %s was successful", self.frameName, cleanPath, method))
     return respBool or true, respCode or 200, respMsg or "OK"
 end
 
@@ -102,21 +107,20 @@ end
 frame:Page("/", "get", sheet)   -- mix
 frame:Post("/", sheet)          -- match
 
-frame:Get("test", sheet)
-frame:Post("/my%20test/path/", sheet)  -- create page with space in path
+frame:Put("/put", sheet)        -- other path for PUT
 
 print("found: ", frame:RoutePath("/", "get"))
 print("found: ", frame:RoutePath("//", "post"))
-print("found: ", frame:RoutePath("/put", "put"))
+print("?????: ", frame:RoutePath("/", "put"))  -- get, post but not put
 
-print("found: ", frame:RoutePath("test", "get"))
-print("found: ", frame:RoutePath("/my test/path", "post"))
-
-print("not found: ", frame:RoutePath("test1", "get"))
-print("no method like this", frame:RoutePath("test", "post"))
-
- frame:Page("/err", "post", err)
-print("func error", frame:RoutePath("err", "post"))
+--print("found: ", frame:RoutePath("test", "get"))
+--print("found: ", frame:RoutePath("/my test/path", "post"))
+--
+--print("not found: ", frame:RoutePath("test1", "get"))
+--print("no method like this", frame:RoutePath("test", "post"))
+--
+-- frame:Page("/err", "post", err)
+--print("func error", frame:RoutePath("err", "post"))
 
 
 
