@@ -54,6 +54,17 @@ function Frame:Delete(path, func) return Frame.Page(self, path, "DELETE", func) 
 function Frame:Patch(path, func) return Frame.Page(self, path, "PATCH", func) end
 
 
+local function RegexPath(path, pages)
+    local cleanPath = CleanPath(path)
+    for path_, func in pairs(pages) do
+        local args = { re.search(string.format([[^%s/?$]], path_), cleanPath) }
+        if #args > 0 then
+            return func, args
+        end
+    end
+end
+
+
 function Frame:RoutePath(path, method)
     method = method and tostring(method):upper() or GetMethod()
 
@@ -66,7 +77,11 @@ function Frame:RoutePath(path, method)
         return false, 501, "Not Implemented"
     end
 
+    local args = {}
     local func = pages[cleanPath]
+    if not func then
+        func, args = RegexPath(path, pages)
+    end
     if not func then
         if not self.paths[cleanPath] or not self.paths[path] then
             Log(kLogWarn, string.format("%s: page '%s' for method %s was not found", self.frameName, cleanPath, method))
@@ -77,7 +92,11 @@ function Frame:RoutePath(path, method)
         end
     end
 
-    local ok, data, respBool, respCode, respMsg = xpcall(func, function(message) Log(kLogError, message) end)
+    local ok, data, respBool, respCode, respMsg = xpcall(
+            func,
+            function(message) Log(kLogError, message) end,
+            select(2, table.unpack(args))
+    )
     if not ok then
         Log(kLogDebug, string.format("%s: function of %s created an error", self.frameName, cleanPath))
         Log(kLogDebug, string.format("%s: 'path' %s was requested with %s", self.frameName, cleanPath, method))
@@ -96,7 +115,8 @@ end
 
 local frame = Frame()
 
-local function sheet()
+local function sheet(...)
+    print("args:", ...)
     return nil, true, 201, "Created"
 end
 
@@ -104,14 +124,14 @@ local function err()
     return "nil" .. nil
 end
 
-frame:Page("/", "get", sheet)   -- mix
+frame:Page([[/test(\d+)]], "get", sheet)   -- mix
 frame:Post("/", sheet)          -- match
 
 frame:Put("/put", sheet)        -- other path for PUT
 
-print("found: ", frame:RoutePath("/", "get"))
-print("found: ", frame:RoutePath("//", "post"))
-print("?????: ", frame:RoutePath("/", "put"))  -- get, post but not put
+print("found: ", frame:RoutePath("/test5", "get"))
+--print("found: ", frame:RoutePath("//", "post"))
+--print("?????: ", frame:RoutePath("/", "put"))  -- get, post but not put
 
 --print("found: ", frame:RoutePath("test", "get"))
 --print("found: ", frame:RoutePath("/my test/path", "post"))
