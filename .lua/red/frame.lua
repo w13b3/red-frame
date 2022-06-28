@@ -54,8 +54,7 @@ function Frame:Delete(path, func) return Frame.Page(self, path, "DELETE", func) 
 function Frame:Patch(path, func) return Frame.Page(self, path, "PATCH", func) end
 
 
-local function RegexPath(path, pages)
-    local cleanPath = CleanPath(path)
+local function RegexPath(cleanPath, pages)
     for path_, func in pairs(pages) do
         local args = { re.search(string.format([[^%s/?$]], path_), cleanPath) }
         if #args > 0 then
@@ -67,10 +66,6 @@ end
 
 function Frame:RoutePath(path, method)
     method = method and tostring(method):upper() or GetMethod()
-
-    local cleanPath = CleanPath(path)
-    cleanPath = EscapePath(cleanPath)
-
     local pages = self.methods[method]
     if not pages then
         Log(kLogWarn, string.format("%s: method %s not implemented", self.frameName, method))
@@ -78,12 +73,13 @@ function Frame:RoutePath(path, method)
     end
 
     local args = {}
-    local func = pages[cleanPath]
+    local cleanPath = CleanPath(path)
+    local func = pages[EscapePath(cleanPath)]
     if not func then
-        func, args = RegexPath(path, pages)
+        func, args = RegexPath(cleanPath, pages)
     end
     if not func then
-        if not self.paths[cleanPath] or not self.paths[path] then
+        if not self.paths[cleanPath] then
             Log(kLogWarn, string.format("%s: page '%s' for method %s was not found", self.frameName, cleanPath, method))
             return false, 404, "Not Found"
         else
@@ -130,7 +126,7 @@ frame:Post("/", sheet)          -- match
 frame:Put("/put", sheet)        -- other path for PUT
 
 print("found: ", frame:RoutePath("/test5", "get"))
---print("found: ", frame:RoutePath("//", "post"))
+print("found: ", frame:RoutePath("//", "post"))
 --print("?????: ", frame:RoutePath("/", "put"))  -- get, post but not put
 
 --print("found: ", frame:RoutePath("test", "get"))
