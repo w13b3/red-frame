@@ -199,6 +199,10 @@ function Frame:RoutePath(path, method)
 end
 
 
+---Get the HTTP-methods that a path can use
+---@public
+---@param path string a path to a page
+---@return table sorted array of strings
 function Frame:GetMethodsOfPath(path)
     path = CleanPath(path)
     local result = {}
@@ -212,6 +216,10 @@ function Frame:GetMethodsOfPath(path)
 end
 
 
+---Get the paths that a HTTP-method contains
+---@public
+---@param method string HTTP-method like: GET, POST ,etc.
+---@return table sorted array of strings
 function Frame:GetPathsOfMethod(method)
     method = method and tostring(method):upper() or ""
     local result = {}
@@ -220,6 +228,40 @@ function Frame:GetPathsOfMethod(method)
     end
     table.sort(result)
     return result
+end
+
+
+---This checks if all the pages are defined correctly
+---@public
+---@return boolean, string true, "OK" returned if no errors are found
+---@return boolean, string false, error message returned if errors are found
+function Frame:IsValidDefined()
+    for method, _ in pairs(self.methods) do
+        local allPaths = self:GetPathsOfMethod(method)
+        for _, path in ipairs(allPaths) do
+            local message = string.format(
+                "%s: method %s of path '%s' is faulty", self.frameName, method, path
+            )
+            local extractedMethods = self:GetMethodsOfPath(path)
+            local definedMethods = self.paths[path] or {}
+            if #extractedMethods ~= #definedMethods then
+                return false, message
+            end
+            local tbl1, tbl2 = {}, {}
+            for key, _ in pairs(extractedMethods) do
+                tbl1[key] = (tbl1[key] or 0) + 1
+            end
+            for key, _ in pairs(definedMethods) do
+                tbl2[key] = (tbl2[key] or 0) + 1
+            end
+            for key, value in pairs(tbl1) do
+                if value ~= tbl2[key] then
+                    return false, message
+                end
+            end
+        end
+    end
+    return true, "OK"
 end
 
 
