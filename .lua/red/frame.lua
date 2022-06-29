@@ -151,7 +151,7 @@ function Frame:RoutePath(path, method)
     end
 
     local args = {}
-    local cleanPath = CleanPath(path)
+    local cleanPath = CleanPath(path or "/")
     -- get the function of the defined path, if not check if the path matches with defined Regex
     local func = pages[EscapePath(cleanPath)]
     if not func then
