@@ -68,14 +68,22 @@ function Frame:Page(path, method, func)
     method = tostring(method):upper()
     path = CleanPath(path)
 
-    self.paths[path] = self.paths[path] or {}
+    self.paths[path] = self.paths[path] or {}  -- add table to paths for the path, if it doesn't already exists
     table.insert(self.paths[path], method)   -- list can have duplicate methods
 
-    self.methods[method] = self.methods[method] or {}
-    self.methods[method][path] = func  -- keys are overwritten if already defined
-    Log(kLogInfo,
-        string.format("%s: created page with path '%s' for the %s method", self.frameName, path, method)
-    )
+    -- assure that given func ends up in the methods as a function
+    if type(func) == "function" then
+        self.methods[method] = self.methods[method] or {}  -- add table for method
+        self.methods[method][path] = func  -- keys are overwritten if already defined
+        Log(kLogInfo, string.format(
+            "%s: created page with path '%s' for the %s method", self.frameName, path, method
+        ))
+    else
+        Log(kLogError, string.format(
+            "%s: the object given to '%s' is of type %s, expected 'function'", self.frameName, path, type(func)
+        ))
+    end
+
 end
 
 
@@ -170,7 +178,10 @@ function Frame:RoutePath(path, method)
     -- call the function given to the page and return the data
     local ok, data, respBool, respCode, respMsg = xpcall(
             func,
-            function(message) Log(kLogError, message) end,
+            -- callback function for logging if an error occurs in func
+            (function(message) Log(kLogError, message) end),
+            -- unpack re.search, the first result is the match, the others are the matched groups
+            -- give the matched strings as arguments to the func
             select(2, table.unpack(args))
     )
     if not ok then
@@ -183,9 +194,32 @@ function Frame:RoutePath(path, method)
     end
 
     Log(kLogInfo, string.format("%s: page '%s' with method %s was successful", self.frameName, cleanPath, method))
-
     if respBool == nil then respBool = true end -- keep respBool false if false is given
     return respBool, respCode or 200, respMsg or "OK"
+end
+
+
+function Frame:GetMethodsOfPath(path)
+    path = CleanPath(path)
+    local result = {}
+    for method, methodTable in pairs(self.methods) do
+        if methodTable[path] then
+            table.insert(result, method)
+        end
+    end
+    table.sort(result)
+    return result
+end
+
+
+function Frame:GetPathsOfMethod(method)
+    method = method and tostring(method):upper() or ""
+    local result = {}
+    for path, _ in pairs(self.methods[method] or {}) do
+        table.insert(result, path)
+    end
+    table.sort(result)
+    return result
 end
 
 
