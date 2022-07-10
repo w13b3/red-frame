@@ -261,7 +261,7 @@ function Frame:IsValidDefined()
             end
         end
     end
-    return true, "OK"
+    return self, "OK"
 end
 
 
