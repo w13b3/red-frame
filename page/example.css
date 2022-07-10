@@ -1,0 +1,79 @@
+.left{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50vw;
+    height: 90vh;
+    background-color: white;
+}
+
+.right {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 90vh;
+    width: 40vw;
+    background-color: white;
+}
+
+.banner {
+    width: calc(100% - 30px);
+    margin: 2vw auto;
+    font-size: calc(16px + 1vw);
+    line-height: calc(1.2em + 0.5vw);
+}
+
+blockquote {
+    font-size: calc(8px + 1vw);
+    line-height: calc(0.5em + 0.5vw);
+}
+
+.menu {
+    width: calc(100% - 30px);
+    height: 50px;
+    margin: 2vw auto;
+    font-size: calc(2px + 1vw);
+    line-height: calc(1.1em + 0.5vw);
+}
+
+.text{
+    position: absolute;
+    width: 30vw;
+    height: 100px;
+    left: 5vw;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: yellow;
+}
+
+figure img {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    width: auto;
+    height: auto;
+    max-height: 50vh;
+    max-width: 50vw;
+    margin: auto;
+
+    background: WhiteSmoke;
+    border-style: solid;
+    border-width: 1.5vmax;
+    border-top-color: Red;
+    border-right-color: FireBrick;
+    border-bottom-color: Red;
+    border-left-color: FireBrick;
+    box-shadow: 3px 6px 6px rgba(0, 0, 0, 0.75);
+    padding: 0.3em;
+}
+
+.centered {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
