@@ -1,7 +1,7 @@
 -- /.init.lua is loaded at startup in redbean's main process
 
 -- extend package.path so lua files in other directories can be loaded in
-package.path = string.format("%s;?.lua", package.path)
+package.path = string.format("%s;/zip/?.lua", package.path)
 local Frame = require("page/example")
 
 
@@ -10,6 +10,7 @@ HidePath('/usr/share/ssl/')
 
 
 function OnHttpRequest()
+    -- get the requested path
     local path = GetPath()
 
     -- check if the given path is hidden
