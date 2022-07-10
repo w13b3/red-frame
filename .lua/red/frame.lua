@@ -1,6 +1,6 @@
 local Frame = {
-    _VERSION = "frame.lua 0.0.1",
-    _URL = "https://github.com/w13b3",
+    _VERSION = "frame.lua 0.0.2",
+    _URL = "https://github.com/w13b3/red-frame",
     _DESCRIPTION = "website framework for redbean",
     _LICENSE = [[
         Copyright 2022 w13b3
@@ -158,7 +158,7 @@ function Frame:RoutePath(path, method)
         -- check if path matches any regex path
         for path_, func_ in pairs(pages) do
             args = { re.search(string.format([[^%s/?$]], path_), cleanPath) }
-            if #args > 0 then
+            if args[1] ~= nil then
                 func = func_
                 break
             end
