@@ -1,10 +1,12 @@
 --[[ frame routepath test ]]
 
+package.path = string.format("%s;/zip/?.lua", package.path)
+
 local Suite = require("test/probo/suite")
 local Mock = require("test/probo/mock")
 local Report = require("test/probo/htmlreport")
 
-local Frame = require("red/frame")
+local Frame = require("frame")
 
 
 local runInfo
